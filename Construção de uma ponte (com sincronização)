@@ -1,0 +1,58 @@
+public class ComSincronizacao {
+    public static void main(String[] args) {
+        Ponte ponte = new Ponte();
+        Thread carro1 = new Thread(new Carro(ponte, "direita"));
+        Thread carro2 = new Thread(new Carro(ponte, "direita"));
+        Thread carro3 = new Thread(new Carro(ponte, "direita"));
+        Thread carro4 = new Thread(new Carro(ponte, "esquerda"));
+
+        carro1.start();
+        carro2.start();
+        carro3.start();
+        carro4.start();
+    }
+}
+
+class Ponte {
+    private boolean ponteOcupada = false;
+
+    public void entrarNaPonte(String direcao) {
+        while (ponteOcupada) {
+            // Espera um pouco antes de tentar novamente
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        ponteOcupada = true;
+        System.out.println("Carro da " + direcao + " está na ponte.");
+    }
+
+    public void sairDaPonte(String direcao) {
+        ponteOcupada = false;
+        System.out.println("Carro da " + direcao + " saiu da ponte.");
+    }
+}
+
+class Carro implements Runnable {
+    private final Ponte ponte;
+    private final String direcao;
+
+    public Carro(Ponte ponte, String direcao) {
+        this.ponte = ponte;
+        this.direcao = direcao;
+    }
+
+    @Override
+    public void run() {
+        ponte.entrarNaPonte(direcao);
+        try {
+            // Simulando o tempo para atravessar a ponte
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        ponte.sairDaPonte(direcao);
+    }
+}

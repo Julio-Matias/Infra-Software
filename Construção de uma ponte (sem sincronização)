@@ -1,0 +1,44 @@
+public class SemSincronizacao {
+    public static void main(String[] args) {
+        PonteSemControle ponte = new PonteSemControle();
+
+        Thread carro1 = new Thread(new CarroSemControle(ponte, "esquerda"));
+        Thread carro2 = new Thread(new CarroSemControle(ponte, "direita"));
+        Thread carro3 = new Thread(new CarroSemControle(ponte, "esquerda"));
+
+        carro1.start();
+        carro2.start();
+        carro3.start();
+    }
+}
+
+class PonteSemControle {
+    public void entrarNaPonte(String direcao) {
+        System.out.println("Carro da " + direcao + " está na ponte.");
+    }
+
+    public void sairDaPonte(String direcao) {
+        System.out.println("Carro da " + direcao + " saiu da ponte.");
+    }
+}
+
+class CarroSemControle implements Runnable {
+    private final PonteSemControle ponte;
+    private final String direcao;
+
+    public CarroSemControle(PonteSemControle ponte, String direcao) {
+        this.ponte = ponte;
+        this.direcao = direcao;
+    }
+
+    @Override
+    public void run() {
+        ponte.entrarNaPonte(direcao);
+        try {
+            Thread.sleep(1000); // Simulando o tempo para atravessar a ponte
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        ponte.sairDaPonte(direcao);
+    }
+}

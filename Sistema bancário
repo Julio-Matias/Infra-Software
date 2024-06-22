@@ -1,0 +1,97 @@
+import java.util.concurrent.Semaphore;
+
+class ContaBancaria {
+    private int saldo;
+    private final Semaphore semaphore;
+
+    public ContaBancaria(int saldoInicial) {
+        this.saldo = saldoInicial;
+        this.semaphore = new Semaphore(1); // Permite uma única thread acessar o saldo por vez
+    }
+
+    public void depositar(int valor, String nome) {
+        try {
+            semaphore.acquire(); // Adquire o bloqueio
+            saldo += valor;
+            System.out.println(nome + " realizou um depósito de " + valor + ". Saldo atual: " + saldo);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            semaphore.release(); // Libera o bloqueio
+        }
+    }
+
+    public void sacar(int valor, String nome) {
+        try {
+            semaphore.acquire();
+            if (valor <= saldo) {
+                saldo -= valor;
+                System.out.println(nome + " sacou: R$" + valor + ". Saldo atual: R$" + saldo);
+            } else {
+                System.out.println(nome + " tentou sacar: R$" + valor + ". Saldo insuficiente! Saldo atual: R$" + saldo);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            semaphore.release();
+        }
+    }
+
+    public int getSaldo() {
+        return saldo;
+    }
+}
+
+class MembroFamilia implements Runnable {
+    private final ContaBancaria conta;
+    private final String operacao;
+    private final int valor;
+    private final String nome;
+
+    public MembroFamilia(ContaBancaria conta, String nome, String operacao, int valor) {
+        this.conta = conta;
+        this.nome = nome;
+        this.operacao = operacao;
+        this.valor = valor;
+    }
+
+    @Override
+    public void run() {
+        if (operacao.equals("deposito")) {
+            conta.depositar(valor, nome);
+        } else if (operacao.equals("saque")) {
+            conta.sacar(valor, nome);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ContaBancaria conta = new ContaBancaria(0);
+
+        Thread familiar1 = new Thread(new MembroFamilia(conta, "Jose", "saque", 500));
+        Thread familiar2 = new Thread(new MembroFamilia(conta, "Marcos", "deposito", 200));
+        Thread familiar3 = new Thread(new MembroFamilia(conta, "Ana", "saque", 700));
+        Thread familiar4 = new Thread(new MembroFamilia(conta, "Maria", "deposito", 300));
+        Thread familiar5 = new Thread(new MembroFamilia(conta, "Joao", "saque", 800));
+
+
+        familiar1.start();
+        familiar2.start();
+        familiar3.start();
+        familiar4.start();
+        familiar5.start();
+
+        try {
+            familiar1.join();
+            familiar2.join();
+            familiar3.join();
+            familiar4.join();
+            familiar5.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Saldo final: " + conta.getSaldo());
+    }
+}

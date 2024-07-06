@@ -2,7 +2,7 @@ import java.util.concurrent.Semaphore;
 
 class Cliente extends Thread {
     private static final Semaphore lugares = new Semaphore(5); // Semáforo para controlar os lugares
-
+//
     private final int id;
 
     public Cliente(int id) {

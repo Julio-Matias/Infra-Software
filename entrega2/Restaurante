@@ -1,8 +1,12 @@
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 class Cliente extends Thread {
     private static final Semaphore lugares = new Semaphore(5); // Semáforo para controlar os lugares
-//
+    private static final Semaphore clientesRestaurante = new Semaphore(100); // Limita o número total de clientes no restaurante
+    private static final Object lock = new Object(); // Objeto de bloqueio para controle de sincronização
+    private static int clientesSentados = 0; // Contador de clientes sentados
+    private static int clientesEsperando = 0; // Contador de clientes esperando para sentar
+
     private final int id;
 
     public Cliente(int id) {
@@ -12,11 +16,40 @@ class Cliente extends Thread {
     @Override
     public void run() {
         try {
-            lugares.acquire(); // Tenta adquirir um lugar
+            clientesRestaurante.acquire(); // Tenta adquirir um lugar na fila de clientes
+            System.out.println("Cliente " + id + " chegou ao restaurante.");
+
+            synchronized (lock) {
+                // Verifica se há 5 clientes esperando; se sim, o sexto desiste imediatamente
+                while (clientesEsperando == 5) {
+                    System.out.println("Cliente " + id + " saiu porque a mesa estava cheia.");
+                    return; // Cliente desiste e sai imediatamente
+                }
+                clientesEsperando++; // Incrementa o contador de clientes esperando
+                // Se a mesa está cheia, todos os outros clientes devem esperar
+                while (clientesSentados == 5) {
+                    System.out.println("Cliente " + id + " está esperando.");
+                    lock.wait();
+                }
+                lugares.acquire(); // Tenta adquirir um lugar na mesa
+                clientesSentados++;
+                clientesEsperando--; // Reduz o contador de clientes esperando
+            }
+
             System.out.println("Cliente " + id + " sentou-se.");
             Thread.sleep(2000); // Simula o tempo de jantar
             System.out.println("Cliente " + id + " terminou de jantar.");
-            lugares.release(); // Libera o lugar
+
+            synchronized (lock) {
+                lugares.release(); // Libera o lugar na mesa
+                clientesSentados--;
+                if (clientesSentados == 0) {
+                    lock.notifyAll(); // Notifica todos os clientes que estão esperando
+                }
+            }
+
+            clientesRestaurante.release(); // Libera o lugar na fila de clientes
+            System.out.println("Cliente " + id + " saiu do restaurante.");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

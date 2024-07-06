@@ -1,0 +1,30 @@
+import java.util.concurrent.Semaphore;
+
+class Cliente extends Thread {
+    private static final Semaphore lugares = new Semaphore(5); // Semáforo para controlar os lugares
+
+    private final int id;
+
+    public Cliente(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public void run() {
+        try {
+            lugares.acquire(); // Tenta adquirir um lugar
+            System.out.println("Cliente " + id + " sentou-se.");
+            Thread.sleep(2000); // Simula o tempo de jantar
+            System.out.println("Cliente " + id + " terminou de jantar.");
+            lugares.release(); // Libera o lugar
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 100; i++) {
+            new Cliente(i).start();
+        }
+    }
+}

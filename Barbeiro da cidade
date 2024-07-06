@@ -1,0 +1,84 @@
+import java.util.concurrent.Semaphore;
+
+public class Barbearia {
+    public static void main(String[] args) {
+        int numCadeiras = 20; // Número de cadeiras na sala de espera
+        Semaphore cadeiras = new Semaphore(numCadeiras);
+        Semaphore cadeiraBarbeiro = new Semaphore(0);
+
+        
+        Thread barbeiroThread = new Thread(new Barbeiro(cadeiras, cadeiraBarbeiro));
+        barbeiroThread.start();
+
+        for (int i = 1; i <= 100; i++) {
+            Thread clienteThread = new Thread(new Cliente(i, cadeiras, cadeiraBarbeiro));
+            clienteThread.start();
+        }
+    }
+}
+
+class Barbeiro implements Runnable {
+    private Semaphore cadeiras;
+    private Semaphore cadeiraBarbeiro;
+
+    public Barbeiro(Semaphore cadeiras, Semaphore cadeiraBarbeiro) {
+        this.cadeiras = cadeiras;
+        this.cadeiraBarbeiro = cadeiraBarbeiro;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                System.out.println("O barbeiro está dormindo");
+                cadeiraBarbeiro.acquire();
+                System.out.println("O barbeiro acordou");
+
+                // Simular tempo para cortar cabelo
+                Thread.sleep(100);
+
+                
+                System.out.println("Corte finalizado");
+                cadeiraBarbeiro.release();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+class Cliente implements Runnable {
+    private int id;
+    private Semaphore cadeiras;
+    private Semaphore cadeiraBarbeiro;
+
+    public Cliente(int id, Semaphore cadeiras, Semaphore cadeiraBarbeiro) {
+        this.id = id;
+        this.cadeiras = cadeiras;
+        this.cadeiraBarbeiro = cadeiraBarbeiro;
+    }
+
+    @Override
+    public void run() {
+        try {
+            
+            if (cadeiras.tryAcquire()) {
+                System.out.println("Cliente " + id + " chegou e sentou na sala de espera");
+
+                // Acordar o barbeiro se estiver dormindo
+                cadeiraBarbeiro.release();
+
+                // Aguardar o corte de cabelo
+                cadeiraBarbeiro.acquire();
+                System.out.println("Cliente " + id + " cortou o cabelo");
+
+                // Liberar a cadeira na sala de espera
+                cadeiras.release();
+            } else {
+                System.out.println("Cliente " + id + " chegou, porém a barbearia está cheia, ele foi embora");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}

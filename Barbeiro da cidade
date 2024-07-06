@@ -32,11 +32,6 @@ class Barbeiro implements Runnable {
             while (true) {
                 System.out.println("O barbeiro está dormindo");
                 cadeiraBarbeiro.acquire();
-                System.out.println("O barbeiro acordou");
-
-                // Simular tempo para cortar cabelo
-                Thread.sleep(100);
-
                 
                 System.out.println("Corte finalizado");
                 cadeiraBarbeiro.release();

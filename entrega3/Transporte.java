@@ -34,7 +34,7 @@ class ParadaOnibus {
         assentos.release(capacidade); // libera os assentos
     }
 
-    // Método getter para o semáforo esperaOnibus
+    
     public Semaphore getEsperaOnibus() {
         return esperaOnibus;
     }
